@@ -42,7 +42,7 @@ def select_playlist(playlists):
                 print("Invalid Index")
                 continue
             
-            return playlists[idx+1]
+            return playlists[idx-1] # One-indexed
 
     if select_flag == 2:
         while True:
@@ -79,10 +79,18 @@ recent_track_list = results['items']
 'disc_number', 'duration_ms', 'explicit', 'external_ids', 'external_urls', 'href', 'id', 'is_local', 'name', 'popularity', 'preview_url', 'track_number', 'type', 'uri'])'''
 
 # Get Playlists
-results = sp.current_user_playlists() 
-''' dict_keys(['collaborative', 'description', 'external_urls', 'href', 'id', 'images',
-  'name', 'owner', 'primary_color', 'public', 'snapshot_id', 'tracks', 'type', 'uri'])'''
-playlists = results['items']
+playlists = []
+offset = 0
+while True:
+    results = sp.current_user_playlists(offset=offset) 
+    ''' dict_keys(['collaborative', 'description', 'external_urls', 'href', 'id', 'images',
+    'name', 'owner', 'primary_color', 'public', 'snapshot_id', 'tracks', 'type', 'uri'])'''
+
+    if not results['items']:
+        break
+
+    playlists.extend(results['items'])
+    offset += 50
 
 # for item in playlists:
 #     print(item['name'], item['id'], item['tracks']['total'])
@@ -91,11 +99,19 @@ playlists = results['items']
 playlist = select_playlist(playlists)
 
 # Get Tracks of Selected Playlist
-results = sp.user_playlist_tracks(playlist_id=playlist['id'])
-playlist_tracks = results['items']
+playlist_tracks = []
+offset = 0
+while True:
+    results = sp.user_playlist_tracks(playlist_id=playlist['id'], offset=offset)
+
+    if not results['items']:
+        break
+
+    playlist_tracks.extend(results['items'])
+    offset += 100
 
 # for item in playlist_tracks:
 #     print(item['track']['name'])
 
 # Queue
-sp.add_to_queue(playlist_tracks[0]['track']['uri'])
+# sp.add_to_queue(playlist_tracks[0]['track']['uri'])
