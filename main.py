@@ -5,6 +5,7 @@ import spotipy
 import spotipy.util as util
 from dotenv import load_dotenv
 from Shuffler import Shuffler
+import time
 
 def get_auth(username, scope):
     token = util.prompt_for_user_token(username, scope)
@@ -56,6 +57,56 @@ def select_playlist(playlists):
 
             print("Did not find name!")
             
+def get_playlists(sp):
+    playlists = []
+    offset = 0
+    offset_difference = 50
+
+    while True:
+        results = sp.current_user_playlists(offset=offset) 
+        ''' dict_keys(['collaborative', 'description', 'external_urls', 'href', 'id', 'images',
+        'name', 'owner', 'primary_color', 'public', 'snapshot_id', 'tracks', 'type', 'uri'])'''
+
+        if not results['items']:
+            break
+
+        playlists.extend(results['items'])
+
+        if len(results['items']) < offset_difference:
+            break
+
+        offset += offset_difference
+
+    return playlists
+
+def get_tracks_from_playlist(sp, playlist):
+    playlist_tracks = []
+    offset = 0
+    offset_difference = 100
+
+    while True:
+        results = sp.user_playlist_tracks(playlist_id=playlist['id'], offset=offset)
+
+        if not results['items']:
+            break
+
+        playlist_tracks.extend(results['items'])
+
+        if len(results['items']) < offset_difference:
+            break
+
+        offset += offset_difference
+    
+    return playlist_tracks
+
+def get_queue_limit():
+    queue_limit = None
+
+    entry = input('Limit number of songs queued?\nEnter number or nothing')
+    if entry.isnumeric():
+        queue_limit = int(entry)
+
+    return queue_limit
 
 load_dotenv()
 
@@ -81,48 +132,18 @@ recent_track_list = results['items']
 'disc_number', 'duration_ms', 'explicit', 'external_ids', 'external_urls', 'href', 'id', 'is_local', 'name', 'popularity', 'preview_url', 'track_number', 'type', 'uri'])'''
 
 # Get Playlists
-playlists = []
-offset = 0
-offset_difference = 50
-while True:
-    results = sp.current_user_playlists(offset=offset) 
-    ''' dict_keys(['collaborative', 'description', 'external_urls', 'href', 'id', 'images',
-    'name', 'owner', 'primary_color', 'public', 'snapshot_id', 'tracks', 'type', 'uri'])'''
-
-    if not results['items']:
-        break
-
-    playlists.extend(results['items'])
-
-    if len(results['items']) < offset_difference:
-        break
-
-    offset += offset_difference
+playlists = get_playlists(sp)
 
 # for item in playlists:
 #     print(item['name'], item['id'], item['tracks']['total'])
 
 # Select Playlist
 playlist = select_playlist(playlists)
+queue_limit = get_queue_limit()
 
 # Get Tracks of Selected Playlist
 print("Getting Tracks from Playlist...")
-playlist_tracks = []
-offset = 0
-offset_difference = 100
-while True:
-    results = sp.user_playlist_tracks(playlist_id=playlist['id'], offset=offset)
-
-    if not results['items']:
-        break
-
-    playlist_tracks.extend(results['items'])
-
-    if len(results['items']) < offset_difference:
-        break
-
-    offset += offset_difference
-
+playlist_tracks = get_tracks_from_playlist(sp, playlist)
 print("Done!")
 
 # for item in playlist_tracks:
@@ -133,7 +154,11 @@ shuffled_list = Shuffler.shuffle(playlist_tracks, recent_track_list, debug=True)
 
 # Queue
 print("Queueing songs...")
-for song in shuffled_list:
+
+for idx, song in enumerate(shuffled_list):
     sp.add_to_queue(song['track']['uri'])
+    if queue_limit is not None and idx > queue_limit:
+        break
+    time.sleep(0.1)
 
 print("Done!")

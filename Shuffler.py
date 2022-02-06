@@ -21,12 +21,13 @@ class Shuffler:
         queue = sorted(queue, key= lambda x: -x['score'])
 
         if debug:
-            with open('queue.txt', 'w',encoding='utf-8') as f:
+            with open('queue.log', 'w',encoding='utf-8') as f:
+                f.write('Recently Played | Song | Artist\n')
                 for thing in queue:
                     rp =  thing['recently_played']
                     if rp == None:
-                        rp = ""
-                    f.write(f'{rp} | {thing["song"]["track"]["name"]} {thing["song"]["track"]["artists"][0]["name"]} \n')
+                        rp = "NA"
+                    f.write(f'{rp} | {thing["song"]["track"]["name"]} | {thing["song"]["track"]["artists"][0]["name"]} \n')
 
         return [x['song'] for x in queue]
 
