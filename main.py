@@ -1,8 +1,10 @@
 import enum
+import re
 import sys
 import spotipy
 import spotipy.util as util
 from dotenv import load_dotenv
+from Shuffler import Shuffler
 
 def get_auth(username, scope):
     token = util.prompt_for_user_token(username, scope)
@@ -16,7 +18,7 @@ def get_auth(username, scope):
 def select_playlist(playlists):
     # Note: User is choosing with 1 based indexes.
     for idx, item in enumerate(playlists):
-        print(f'Index {idx+1} | Name {item["name"]} | Tracks {item["tracks"]["total"]} ')
+        print(f'Index {idx+1} | Name {item["name"]} | # of Tracks {item["tracks"]["total"]} ')
 
     entry = None
     select_flag = 0
@@ -81,6 +83,7 @@ recent_track_list = results['items']
 # Get Playlists
 playlists = []
 offset = 0
+offset_difference = 50
 while True:
     results = sp.current_user_playlists(offset=offset) 
     ''' dict_keys(['collaborative', 'description', 'external_urls', 'href', 'id', 'images',
@@ -90,7 +93,11 @@ while True:
         break
 
     playlists.extend(results['items'])
-    offset += 50
+
+    if len(results['items']) < offset_difference:
+        break
+
+    offset += offset_difference
 
 # for item in playlists:
 #     print(item['name'], item['id'], item['tracks']['total'])
@@ -99,8 +106,10 @@ while True:
 playlist = select_playlist(playlists)
 
 # Get Tracks of Selected Playlist
+print("Getting Tracks from Playlist...")
 playlist_tracks = []
 offset = 0
+offset_difference = 100
 while True:
     results = sp.user_playlist_tracks(playlist_id=playlist['id'], offset=offset)
 
@@ -108,10 +117,23 @@ while True:
         break
 
     playlist_tracks.extend(results['items'])
-    offset += 100
+
+    if len(results['items']) < offset_difference:
+        break
+
+    offset += offset_difference
+
+print("Done!")
 
 # for item in playlist_tracks:
 #     print(item['track']['name'])
 
+# Get Shuffled List
+shuffled_list = Shuffler.shuffle(playlist_tracks, recent_track_list, debug=True)
+
 # Queue
-# sp.add_to_queue(playlist_tracks[0]['track']['uri'])
+print("Queueing songs...")
+for song in shuffled_list:
+    sp.add_to_queue(song['track']['uri'])
+
+print("Done!")
