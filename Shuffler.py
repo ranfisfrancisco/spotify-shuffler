@@ -5,7 +5,7 @@ import logging
 
 class Shuffler:
 
-    def shuffle(song_list: List, recently_played: List, no_double_artist=False, debug=False) -> List:
+    def shuffle(song_list: List, recently_played: List, no_double_artist=False, no_double_album=False, debug=False) -> List:
         queue = []
         queue.extend([{'song' : song, 'score': 0, 'recently_played': None} for song in song_list])
 
@@ -22,6 +22,8 @@ class Shuffler:
 
         if no_double_artist:
             queue = Shuffler.filter_double_artist(queue)
+        elif no_double_album:
+            queue = Shuffler.filter_double_album(queue)
 
         if debug:
             with open('queue.log', 'w',encoding='utf-8') as f:
@@ -55,6 +57,28 @@ class Shuffler:
 
             if cur_artist == prev_artist:
                 print("---EQUALS EVENT", cur_artist)
+
+    def filter_double_album(queue):
+        for i in range(1, len(queue)-1):
+            cur_album = queue[i]["song"]["track"]["album"]["name"]
+            prev_album = queue[i-1]["song"]["track"]["album"]["name"]
+
+            if cur_album == prev_album:
+                print("EQUALS EVENT", cur_album)
+                for j in range(i+1, len(queue)):
+                    j_artist = queue[j]["song"]["track"]["album"]["name"]
+
+                    if cur_album != j_artist:
+                        temp = queue[j]
+                        queue[j] = queue[i]
+                        queue[i] = temp
+
+        for i in range(1, len(queue)-1):
+            cur_album=queue[i]["song"]["track"]["album"]["name"]
+            prev_album=queue[i-1]["song"]["track"]["album"]["name"]
+
+            if cur_album == prev_album:
+                print("---EQUALS EVENT", cur_album)
 
         return queue
 

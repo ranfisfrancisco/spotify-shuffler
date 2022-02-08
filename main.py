@@ -1,11 +1,9 @@
-import enum
-import re
 import sys
+import time
 import spotipy
 import spotipy.util as util
 from dotenv import load_dotenv
 from Shuffler import Shuffler
-import time
 
 def get_auth(username, scope):
     token = util.prompt_for_user_token(username, scope)
@@ -150,7 +148,7 @@ print("Done!")
 #     print(item['track']['name'])
 
 # Get Shuffled List
-shuffled_list = Shuffler.shuffle(playlist_tracks, recent_track_list, no_double_artist=True, debug=True)
+shuffled_list = Shuffler.shuffle(playlist_tracks, recent_track_list, no_double_album=True, debug=True)
 
 # Queue
 print("Queueing songs...")
