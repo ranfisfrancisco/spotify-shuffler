@@ -14,7 +14,12 @@ def get_auth(username, scope):
     sp = spotipy.Spotify(auth=token)
     return sp
 
-def select_playlist(playlists):
+def select_playlist(playlists, selected_playlist_name=None):
+    if selected_playlist_name:
+        for item in playlists:
+            if item['name'] == selected_playlist_name:
+                return item
+
     # Note: User is choosing with 1 based indexes.
     for idx, item in enumerate(playlists):
         print(f'Index {idx+1} | Name {item["name"]} | # of Tracks {item["tracks"]["total"]} ')
@@ -106,57 +111,93 @@ def get_queue_limit():
 
     return queue_limit
 
-load_dotenv()
+def parse_args(argv):
+    username = None
+    playlist_name = None
+    queue_limit = None
 
-scope = 'user-library-read user-read-recently-played playlist-read-private streaming'
+    for idx, arg in enumerate(argv):
+        try:
+            if arg == '-u':
+                username = argv[idx+1]
+            elif arg == '-p':
+                playlist_name = argv[idx+1]
+            elif arg == '-l':
+                if not argv[idx+1].isnumeric():
+                    sys.exit(f"Queue limit must be integer")
 
-if len(sys.argv) > 1:
-    username = sys.argv[1]
-else:
-    print("Usage: %s username" % (sys.argv[0],))
-    sys.exit()
+                queue_limit = int(argv[idx+1])
 
-sp = get_auth(username, scope)
-if not sp:
-    print("Can't get token for", username)
-    sys.exit()
+                if queue_limit < 1:
+                    sys.exit(f"Queue limit must be greater than 0.")
+        
+        except IndexError:
+            sys.exit(f"Each -u, -p and -l must have an argument after it.")
 
-# Get Recently Played
-results = sp.current_user_recently_played(limit=50)
-recent_track_list = results['items']
+    return (username, playlist_name, queue_limit)
 
-# print(recent_track_list[0]['tracks'].keys()) 
-''' dict_keys(['album', 'artists', 'available_markets',
-'disc_number', 'duration_ms', 'explicit', 'external_ids', 'external_urls', 'href', 'id', 'is_local', 'name', 'popularity', 'preview_url', 'track_number', 'type', 'uri'])'''
+if __name__ == "__main__":
+    load_dotenv()
 
-# Get Playlists
-playlists = get_playlists(sp)
+    scope = 'user-library-read user-read-recently-played playlist-read-private streaming'
 
-# for item in playlists:
-#     print(item['name'], item['id'], item['tracks']['total'])
+    argv = sys.argv[1:]
 
-# Select Playlist
-playlist = select_playlist(playlists)
-queue_limit = get_queue_limit()
+    username, playlist_name, queue_limit = parse_args(argv)
 
-# Get Tracks of Selected Playlist
-print("Getting Tracks from Playlist...")
-playlist_tracks = get_tracks_from_playlist(sp, playlist)
-print("Done!")
+    if username == None:
+        username = input("Enter Spotify Username: ")
 
-# for item in playlist_tracks:
-#     print(item['track']['name'])
+    sp = get_auth(username, scope)
+    if not sp:
+        print("Can't get token for ", username)
+        sys.exit()
 
-# Get Shuffled List
-shuffled_list = Shuffler.shuffle(playlist_tracks, recent_track_list, no_double_album=True, debug=True)
+    # Get Recently Played
+    results = sp.current_user_recently_played(limit=50)
+    recent_track_list = results['items']
 
-# Queue
-print("Queueing songs...")
+    # print(recent_track_list[0]['tracks'].keys()) 
+    ''' dict_keys(['album', 'artists', 'available_markets',
+    'disc_number', 'duration_ms', 'explicit', 'external_ids', 'external_urls', 'href', 'id', 'is_local', 'name', 'popularity', 'preview_url', 'track_number', 'type', 'uri'])'''
 
-for idx, song in enumerate(shuffled_list):
-    sp.add_to_queue(song['track']['uri'])
-    if queue_limit is not None and idx > queue_limit:
-        break
-    time.sleep(0.03)
+    # Get Playlists
+    playlists = get_playlists(sp)
 
-print("Done!")
+    # for item in playlists:
+    #     print(item['name'], item['id'], item['tracks']['total'])
+
+    # Select Playlist
+    if playlist_name:
+        playlist = select_playlist(playlists, playlist_name)
+    else:
+        playlist = select_playlist(playlists)
+
+    if queue_limit is None:
+        queue_limit = get_queue_limit()
+
+    # Get Tracks of Selected Playlist
+    print("Getting Tracks from Playlist...")
+    playlist_tracks = get_tracks_from_playlist(sp, playlist)
+    print("Done!")
+
+    # for item in playlist_tracks:
+    #     print(item['track']['name'])
+
+    # Get Shuffled List
+    shuffled_list = Shuffler.shuffle(playlist_tracks, recent_track_list, no_double_album=True, debug=True)
+
+    # Queue
+    print("Queueing songs...")
+
+    try:
+        for idx, song in enumerate(shuffled_list):
+            sp.add_to_queue(song['track']['uri'])
+            if queue_limit is not None and queue_limit > 0 and idx > queue_limit:
+                break
+            time.sleep(0.03)
+    except spotipy.exceptions.SpotifyException:
+        print("ERROR: Please make sure a device is actively playing.")
+        sys.exit()
+
+    print("Done!")
