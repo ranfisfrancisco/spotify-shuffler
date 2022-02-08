@@ -6,6 +6,15 @@ from dotenv import load_dotenv
 from Shuffler import Shuffler
 
 def get_auth(username, scope):
+    """Get authentication and crate Spotify object for API interaction
+
+    Return spotipy.Spotify object if successful, None otherwise.
+
+    Keyword arguments:
+
+    username -- string containing the Spotify username
+    scope -- string containing desired permissions (see Spotify API documentation)"""
+
     token = util.prompt_for_user_token(username, scope)
 
     if not token:
@@ -15,6 +24,18 @@ def get_auth(username, scope):
     return sp
 
 def select_playlist(playlists, selected_playlist_name=None):
+    """Get dictionary object for a playlist chosen by the user from a list of playlists.
+
+    Returns dictionary with the playlist data.
+
+    Keyword arguments:
+
+    playlists -- list of playlists obtained through Spotify API
+
+    selected_playlist_name -- if the user has already entered the desired playlist name,
+    this will be used to find the playlist first (default None)
+    """
+
     if selected_playlist_name:
         for item in playlists:
             if item['name'] == selected_playlist_name:
@@ -61,6 +82,13 @@ def select_playlist(playlists, selected_playlist_name=None):
             print("Did not find name!")
             
 def get_playlists(sp):
+    """Gets a user's playlists.
+    
+    Assumes spotipy.spotify object passed in is already authenticated with a user.
+    
+    Keyword arguments:
+    
+    sp - spotipy.Spotify object authenticated with user"""
     playlists = []
     offset = 0
     offset_difference = 50
@@ -83,6 +111,19 @@ def get_playlists(sp):
     return playlists
 
 def get_tracks_from_playlist(sp, playlist):
+    """Get tracks from a given playlist
+    
+    Assumes spotipy.Spotify object passed in is already authenticated with a user
+
+    Returns list of track dictionary objects from Spotify API. Returns empty list if playlist is empty
+    or the playlist was not found.
+    
+    Keyword arguments:
+    
+    sp -- spotipy.Spotify object authenticated with a user
+
+    playlist -- dictionary object of data from Spotify API for a particular playlist"""
+
     playlist_tracks = []
     offset = 0
     offset_difference = 100
@@ -103,15 +144,29 @@ def get_tracks_from_playlist(sp, playlist):
     return playlist_tracks
 
 def get_queue_limit():
+    '''Prompt user to enter queue limit.
+    
+    Returns positive integer that is the queue limit
+    or None if no limit is desired or correctly entered.'''
     queue_limit = None
 
     entry = input('Limit number of songs queued?\nEnter number or nothing\n')
     if entry.isnumeric():
         queue_limit = int(entry)
 
+    if queue_limit < 0:
+        queue_limit = None
+
     return queue_limit
 
-def parse_args(argv):
+def parse_args(argv: list) -> tuple:
+    '''Parse command line arguments and return variables and flags as necessary.
+    
+    Returns tuple of username, playlist_name, queue_limit, no_double_artist_flag, no_double_album_flag
+
+    Keyword arguments:
+    
+    argv -- command line arguments as list. Same as sys.argv'''
     username = None
     playlist_name = None
     queue_limit = None
@@ -142,12 +197,11 @@ def parse_args(argv):
 
     return (username, playlist_name, queue_limit, no_double_artist_flag, no_double_album_flag)
 
-if __name__ == "__main__":
+def main(argv):
+    '''Shuffle '''
     load_dotenv()
 
     scope = 'user-library-read user-read-recently-played playlist-read-private streaming'
-
-    argv = sys.argv[1:]
 
     username, playlist_name, queue_limit, \
          no_double_artist_flag, no_double_album_flag = parse_args(argv)
@@ -205,3 +259,6 @@ if __name__ == "__main__":
         sys.exit()
 
     print("Done!")
+
+if __name__ == "__main__":
+    main(sys.argv)
