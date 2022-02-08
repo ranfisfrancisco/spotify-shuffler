@@ -6,6 +6,18 @@ import logging
 class Shuffler:
 
     def shuffle(song_list: List, recently_played: List, no_double_artist=False, no_double_album=False, debug=False) -> List:
+        '''Shuffle list of songs weighed against what was recently played with several optional modifications.
+        
+        song_list -- list of tracks obtained from the Spotify API
+        
+        recently_played -- list of tracks obtained from the Spotify API that have been played recently
+        
+        no_double_artist -- flag that suggests shuffler should avoid playing the same artist back to back. (default: False)
+        
+        no_double_album -- flag that suggests shuffler should avoid playing the same album back to back. (default: False)
+        
+        debug -- flag that writes the shuffled queue to queue.log file'''
+
         queue = []
         queue.extend([{'song' : song, 'score': 0, 'recently_played': None} for song in song_list])
 
@@ -37,6 +49,10 @@ class Shuffler:
         return [x['song'] for x in queue]
 
     def filter_double_artist(queue):
+        '''Filter queue to avoid the same artist playing twice in a row.
+        
+        queue -- list of tracks'''
+
         for i in range(1, len(queue)-1):
             cur_artist = queue[i]["song"]["track"]["artists"][0]["name"]
             prev_artist = queue[i-1]["song"]["track"]["artists"][0]["name"]
@@ -61,6 +77,10 @@ class Shuffler:
         return queue
 
     def filter_double_album(queue):
+        '''Filter queue to avoid the same album playing twice in a row.
+        
+        queue -- list of tracks'''
+
         for i in range(1, len(queue)-1):
             cur_album = queue[i]["song"]["track"]["album"]["name"]
             prev_album = queue[i-1]["song"]["track"]["album"]["name"]
@@ -85,6 +105,10 @@ class Shuffler:
         return queue
 
     def get_recency_bias(song_dict):
+        '''Get penalty to apply to score based on how recently a song was played.
+        
+        song_dict -- dictionary of {'song': json track data, 'score': integer denoting score, 'recently_played': integer denoting how recently it was played}'''
+
         if (song_dict['recently_played'] is None):
             return 0
 
@@ -101,9 +125,18 @@ class Shuffler:
         return -bias
 
     def get_random(song_dict=None):
+        '''Get random value to add to song's score.
+        
+        song_dict -- dictionary of {'song': json track data, 'score': integer denoting score, 'recently_played': integer denoting how recently it was played}. Default None. Has no effect'''
         return randint(0, 1000)
 
     def get_score(song_dict):
+        '''Assign score to each song to be used in shuffling.
+        
+        Arguments:
+
+        song_dict -- dictionary of {'song': json track data, 'score': integer denoting score, 'recently_played': integer denoting how recently it was played}.
+        '''
         score = 0
 
         score += Shuffler.get_recency_bias(song_dict)

@@ -5,12 +5,12 @@ import spotipy.util as util
 from dotenv import load_dotenv
 from Shuffler import Shuffler
 
-def get_auth(username, scope):
+def get_auth(username, scope) -> spotipy.Spotify:
     """Get authentication and crate Spotify object for API interaction
 
     Return spotipy.Spotify object if successful, None otherwise.
 
-    Keyword arguments:
+    Arguments:
 
     username -- string containing the Spotify username
     scope -- string containing desired permissions (see Spotify API documentation)"""
@@ -28,7 +28,7 @@ def select_playlist(playlists, selected_playlist_name=None):
 
     Returns dictionary with the playlist data.
 
-    Keyword arguments:
+    Arguments:
 
     playlists -- list of playlists obtained through Spotify API
 
@@ -86,7 +86,7 @@ def get_playlists(sp):
     
     Assumes spotipy.spotify object passed in is already authenticated with a user.
     
-    Keyword arguments:
+    Arguments:
     
     sp - spotipy.Spotify object authenticated with user"""
     playlists = []
@@ -118,7 +118,7 @@ def get_tracks_from_playlist(sp, playlist):
     Returns list of track dictionary objects from Spotify API. Returns empty list if playlist is empty
     or the playlist was not found.
     
-    Keyword arguments:
+    Arguments:
     
     sp -- spotipy.Spotify object authenticated with a user
 
@@ -164,7 +164,7 @@ def parse_args(argv: list) -> tuple:
     
     Returns tuple of username, playlist_name, queue_limit, no_double_artist_flag, no_double_album_flag
 
-    Keyword arguments:
+    Arguments:
     
     argv -- command line arguments as list. Same as sys.argv'''
     username = None
@@ -198,7 +198,24 @@ def parse_args(argv: list) -> tuple:
     return (username, playlist_name, queue_limit, no_double_artist_flag, no_double_album_flag)
 
 def main(argv):
-    '''Shuffle '''
+    '''Shuffle songs in playlist and add to user's play queue.
+    
+    Arguments:
+    
+    argv -- same as sys.argv
+    
+    Supports several flags through argv:
+    
+    -u -- argument following this is the user's username. Will be prompted for this if not provided.
+    
+    -p -- argument following this is the desired playlist to shuffle. Will be prompted for this if not provided.
+    
+    -l -- argument following this is the maximum number of songs that should be queued. Will be prompted for this if not provided
+    
+    -ndar -- flag that makes shuffler avoid playing the same artist twice in a row.
+
+    -ndal -- flag that makes shuffler avoid playing the same album twice in a row.'''
+
     load_dotenv()
 
     scope = 'user-library-read user-read-recently-played playlist-read-private streaming'
