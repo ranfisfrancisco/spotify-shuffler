@@ -115,6 +115,8 @@ def parse_args(argv):
     username = None
     playlist_name = None
     queue_limit = None
+    no_double_artist_flag = False
+    no_double_album_flag = False
 
     for idx, arg in enumerate(argv):
         try:
@@ -130,11 +132,15 @@ def parse_args(argv):
 
                 if queue_limit < 1:
                     sys.exit(f"Queue limit must be greater than 0.")
+            elif arg == '-ndar':
+                no_double_artist_flag = True
+            elif arg == '-ndal':
+                no_double_album_flag = True
         
         except IndexError:
             sys.exit(f"Each -u, -p and -l must have an argument after it.")
 
-    return (username, playlist_name, queue_limit)
+    return (username, playlist_name, queue_limit, no_double_artist_flag, no_double_album_flag)
 
 if __name__ == "__main__":
     load_dotenv()
@@ -143,7 +149,8 @@ if __name__ == "__main__":
 
     argv = sys.argv[1:]
 
-    username, playlist_name, queue_limit = parse_args(argv)
+    username, playlist_name, queue_limit, \
+         no_double_artist_flag, no_double_album_flag = parse_args(argv)
 
     if username == None:
         username = input("Enter Spotify Username: ")
@@ -168,10 +175,7 @@ if __name__ == "__main__":
     #     print(item['name'], item['id'], item['tracks']['total'])
 
     # Select Playlist
-    if playlist_name:
-        playlist = select_playlist(playlists, playlist_name)
-    else:
-        playlist = select_playlist(playlists)
+    playlist = select_playlist(playlists, playlist_name)
 
     if queue_limit is None:
         queue_limit = get_queue_limit()
@@ -185,7 +189,7 @@ if __name__ == "__main__":
     #     print(item['track']['name'])
 
     # Get Shuffled List
-    shuffled_list = Shuffler.shuffle(playlist_tracks, recent_track_list, no_double_album=True, debug=True)
+    shuffled_list = Shuffler.shuffle(playlist_tracks, recent_track_list, no_double_artist=no_double_artist_flag, no_double_album=no_double_album_flag, debug=True)
 
     # Queue
     print("Queueing songs...")

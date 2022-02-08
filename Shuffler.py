@@ -58,6 +58,8 @@ class Shuffler:
             if cur_artist == prev_artist:
                 print("---EQUALS EVENT", cur_artist)
 
+        return queue
+
     def filter_double_album(queue):
         for i in range(1, len(queue)-1):
             cur_album = queue[i]["song"]["track"]["album"]["name"]
