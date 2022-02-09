@@ -258,11 +258,11 @@ def main(argv):
     options = parse_args(argv)
 
     if options['username'] is None:
-        username = input("Enter Spotify Username: ")
+        options['username'] = input("Enter Spotify Username: ")
 
-    spotify_conn = get_auth(username, scope)
+    spotify_conn = get_auth(options['username'], scope)
     if not spotify_conn:
-        print("Can't get token for ", username)
+        print("Can't get token for ", options['username'])
         sys.exit()
 
     # Get Recently Played
@@ -271,9 +271,6 @@ def main(argv):
 
     # Get Playlists
     playlists = get_playlists(spotify_conn)
-
-    # for item in playlists:
-    #     print(item['name'], item['id'], item['tracks']['total'])
 
     # Select Playlist
     if options["playlist_name"]:
