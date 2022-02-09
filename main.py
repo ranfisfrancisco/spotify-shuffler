@@ -5,6 +5,18 @@ import spotipy.util as util
 from dotenv import load_dotenv
 from Shuffler import Shuffler
 
+def help():
+    """Returns help doc."""
+    return '''Flags: \n\
+    -u : Argument after this flag is taken as the username. Program will ask for username if not provided. Example: python main.py -u usernameHere
+    -p : Argument after this flag is taken as the playlist to be queued. Program will as for playlist name if not provided. Example: python main.py -playlist rock
+    -l : Argument after this flag is taken as the max number of songs to be queued. Program will as for limit if not provided. Example: python main.py -l 20
+    -ndar: Signfies that the shuffler should avoid having the same artist play twice in a row (no double artist)
+    -ndal: Signfies that the shuffler should avoid having the same artist play twice in a row (no double album)
+        
+Troubleshooting:
+    Make sure a device is actively connected to Spotify/playing or the queue attempt will fail.'''
+
 def get_auth(username, scope) -> spotipy.Spotify:
     """Get authentication and crate Spotify object for API interaction
 
@@ -191,6 +203,8 @@ def parse_args(argv: list) -> tuple:
                 no_double_artist_flag = True
             elif arg == '-ndal':
                 no_double_album_flag = True
+            elif arg == "-help" or arg == "-h":
+                sys.exit(help())
         
         except IndexError:
             sys.exit(f"Each -u, -p and -l must have an argument after it.")
