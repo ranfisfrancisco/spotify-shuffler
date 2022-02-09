@@ -10,19 +10,19 @@ def help_string():
     """Returns help doc."""
     return '''Options: \n\
     -u : Argument after this flag is taken as the username. Program will ask for username if not provided. Example: python main.py -u usernameHere
-    -p : Argument after this flag is taken as the playlist to be queued. Program will ask for playlist name if not provided. Example: python main.py -playlist rock
-    -l : Argument after this flag is taken as the max number of songs to be queued. Program will ask for limit if not provided. "inf" signifies no limit. 
+    -p : Argument after this flag is taken as the playlist to be queued. Program will ask for playlist name if not provided. Example: python main.py -playlist "rock"
+    If the playlist name is multiple words, it MUST be surrounded by double quotes ("").
+    -l : Argument after this flag is taken as the max number of songs to be queued. Program will ask for limit if not provided. "inf" signifies no limit.
     Example: python main.py -l 20
     Example: python main.py -l inf
     -ndar: Signfies that the shuffler should avoid having the same artist play twice in a row (no double artist)
     -ndal: Signfies that the shuffler should avoid having the same artist play twice in a row (no double album)
-        
+
 Troubleshooting:
     Make sure a device is actively connected to Spotify/playing or the queue attempt will fail.
     If two playlists have the same name, the first one will be selected. To circumvent this,
     do not provide a playlist name through the command line and use the prompt that shows up to
-    select a playlist by index. Or just don't have two playlists with the same name, why
-    would you do that anyway?'''
+    select a playlist by index. Or just don't have two playlists with the same name!'''
 
 def get_auth(username, scope) -> spotipy.Spotify:
     """Get authentication and crate Spotify object for API interaction
@@ -179,6 +179,31 @@ def prompt_for_queue_limit():
 
     return queue_limit
 
+def group_quotes(argv):
+    """Returm list of argv arguments where strings in quotes are grouped as a single item.
+    For example: ['-p', '"my', 'awesome', 'playlist"']
+    becomes ['-p', 'my awesome playlist']
+
+    Arguments:
+
+    argv - same as sys.argv"""
+
+    ans = []
+    in_quotes = False
+
+    for var in argv:
+        if not in_quotes:
+            if var[0] == '"':
+                in_quotes = True
+            ans.append(var)
+        else:
+            ans[-1] = ans[-1] + " " + var
+            if var[-1] == '"':
+                in_quotes = False
+        ans[-1] = ans[-1].strip('"')
+
+    return ans
+
 def parse_args(argv: list) -> tuple:
     '''Parse command line arguments and return variables and flags as necessary.
 
@@ -196,6 +221,8 @@ def parse_args(argv: list) -> tuple:
         "no_double_artist_flag" : False,
         "no_double_album_flag" : False
     }
+
+    argv = group_quotes(argv)
 
     for idx, arg in enumerate(argv):
         try:
@@ -299,7 +326,8 @@ def main(argv):
     try:
         for idx, song in enumerate(shuffled_queue):
             spotify_conn.add_to_queue(song['track']['uri'])
-            if options["queue_limit"] is not None and idx > options["queue_limit"]:
+            print(options["queue_limit"], idx)
+            if options["queue_limit"] is not None and idx >= options["queue_limit"] - 1:
                 break
             time.sleep(0.03)
     except spotipy.exceptions.SpotifyException:
