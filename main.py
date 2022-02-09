@@ -1,3 +1,4 @@
+"""Main module."""
 import sys
 import time
 import spotipy
@@ -7,7 +8,7 @@ from Shuffler import Shuffler
 
 def help_string():
     """Returns help doc."""
-    return '''Flags: \n\
+    return '''Options: \n\
     -u : Argument after this flag is taken as the username. Program will ask for username if not provided. Example: python main.py -u usernameHere
     -p : Argument after this flag is taken as the playlist to be queued. Program will ask for playlist name if not provided. Example: python main.py -playlist rock
     -l : Argument after this flag is taken as the max number of songs to be queued. Program will ask for limit if not provided. "inf" signifies no limit. 
@@ -37,7 +38,7 @@ def get_auth(username, scope) -> spotipy.Spotify:
     spotify_conn = spotipy.Spotify(auth=token)
     return spotify_conn
 
-def select_playlist(playlists, selected_playlist_name=None):
+def prompt_for_playlist(playlists, selected_playlist_name=None):
     """Get dictionary object for a playlist chosen by the user from a list of playlists.
 
     Returns dictionary with the playlist data.
@@ -55,18 +56,17 @@ def select_playlist(playlists, selected_playlist_name=None):
             if item['name'] == selected_playlist_name:
                 return item
 
+    entry = None
+    select_flag = 0
+
     # Note: User is choosing with 1 based indexes.
     for idx, item in enumerate(playlists):
         print(f'Index {idx+1} | Name {item["name"]} | # of Tracks {item["tracks"]["total"]} ')
 
-    entry = None
-    select_flag = 0
     while select_flag == 0:
         entry = input('Select Playlist by Index or Name?\n1. Index\n2. Name\n')
-        if entry.isnumeric() and int(entry) == 1:
-            select_flag = 1
-        elif entry.isnumeric() and int(entry) == 2:
-            select_flag = 2
+        if entry.isnumeric() and int(entry) in [1, 2]:
+            select_flag = int(entry)
         else:
             print("Invalid Input")
 
@@ -74,17 +74,14 @@ def select_playlist(playlists, selected_playlist_name=None):
     if select_flag == 1:
         while True:
             entry = input('Enter index: ')
-            if not entry.isnumeric():
-                continue
-
-            idx = int(entry)
-            if idx > len(playlists) or idx < 1:
+            if not entry.isnumeric() or int(entry) > len(playlists) or int(entry) < 1:
                 print("Invalid Index")
                 continue
 
-            return playlists[idx-1] # One-indexed
+            idx = int(entry)
 
-    if select_flag == 2:
+            return playlists[idx-1] # One-indexed
+    elif select_flag == 2:
         while True:
             entry = input('Enter name: ')
 
@@ -154,7 +151,7 @@ def get_tracks_from_playlist(spotify_conn, playlist):
 
     return playlist_tracks
 
-def get_queue_limit():
+def prompt_for_queue_limit():
     '''Prompt user to enter queue limit.
 
     Returns positive integer that is the queue limit
@@ -179,6 +176,7 @@ def parse_args(argv: list) -> tuple:
     Arguments:
 
     argv -- command line arguments as list. Same as sys.argv'''
+
     username = None
     playlist_name = None
     queue_limit = None
@@ -264,18 +262,15 @@ def main(argv):
     #     print(item['name'], item['id'], item['tracks']['total'])
 
     # Select Playlist
-    playlist = select_playlist(playlists, playlist_name)
+    playlist = prompt_for_playlist(playlists, playlist_name)
 
     if queue_limit is None:
-        queue_limit = get_queue_limit()
+        queue_limit = prompt_for_queue_limit()
 
     # Get Tracks of Selected Playlist
     print("Getting Tracks from Playlist...")
     playlist_tracks = get_tracks_from_playlist(spotify_conn, playlist)
     print("Done!")
-
-    # for item in playlist_tracks:
-    #     print(item['track']['name'])
 
     # Get Shuffled List
     shuffled_list = Shuffler.shuffle(playlist_tracks, recent_track_list,
@@ -291,8 +286,7 @@ def main(argv):
                 break
             time.sleep(0.03)
     except spotipy.exceptions.SpotifyException:
-        print("ERROR: Please make sure a device is actively playing.")
-        sys.exit()
+        sys.exit("ERROR: Please make sure a device is actively playing.")
 
     print("Done!")
 
