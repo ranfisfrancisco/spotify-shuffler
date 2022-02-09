@@ -4,7 +4,7 @@ import time
 import spotipy
 from spotipy import util
 from dotenv import load_dotenv
-from Shuffler import Shuffler
+from shuffler import Shuffler
 
 def help_string():
     """Returns help doc."""
@@ -18,7 +18,11 @@ def help_string():
     -ndal: Signfies that the shuffler should avoid having the same artist play twice in a row (no double album)
         
 Troubleshooting:
-    Make sure a device is actively connected to Spotify/playing or the queue attempt will fail.'''
+    Make sure a device is actively connected to Spotify/playing or the queue attempt will fail.
+    If two playlists have the same name, the first one will be selected. To circumvent this,
+    do not provide a playlist name through the command line and use the prompt that shows up to
+    select a playlist by index. Or just don't have two playlists with the same name, why
+    would you do that anyway?'''
 
 def get_auth(username, scope) -> spotipy.Spotify:
     """Get authentication and crate Spotify object for API interaction
@@ -38,7 +42,21 @@ def get_auth(username, scope) -> spotipy.Spotify:
     spotify_conn = spotipy.Spotify(auth=token)
     return spotify_conn
 
-def prompt_for_playlist(playlists, selected_playlist_name=None):
+def find_name_in_playlists(playlists, name):
+    """Return playlist matching given name.
+    Returns None if not found.
+
+    Arguments:
+
+    playlists -- list of playlists obtained through Spotify API
+    name -- string that is the name of the playlist to be played."""
+
+    for item in playlists:
+        if item['name'] == name:
+            return item
+    return None
+
+def prompt_for_playlist(playlists):
     """Get dictionary object for a playlist chosen by the user from a list of playlists.
 
     Returns dictionary with the playlist data.
@@ -50,11 +68,6 @@ def prompt_for_playlist(playlists, selected_playlist_name=None):
     selected_playlist_name -- if the user has already entered the desired playlist name,
     this will be used to find the playlist first (default None)
     """
-
-    if selected_playlist_name:
-        for item in playlists:
-            if item['name'] == selected_playlist_name:
-                return item
 
     entry = None
     select_flag = 0
@@ -79,15 +92,14 @@ def prompt_for_playlist(playlists, selected_playlist_name=None):
                 continue
 
             idx = int(entry)
-
             return playlists[idx-1] # One-indexed
     elif select_flag == 2:
         while True:
             entry = input('Enter name: ')
 
-            for item in playlists:
-                if item['name'] == entry:
-                    return item
+            playlist = find_name_in_playlists(playlists, entry)
+            if playlist:
+                return playlist
 
             print("Did not find name!")
 
@@ -262,7 +274,12 @@ def main(argv):
     #     print(item['name'], item['id'], item['tracks']['total'])
 
     # Select Playlist
-    playlist = prompt_for_playlist(playlists, playlist_name)
+    if playlist_name:
+        playlist = find_name_in_playlists(playlists, playlist_name)
+        if not playlist:
+            sys.exit("Failed to find playlist with that name. Must match exactly!")
+    else:
+        playlist = prompt_for_playlist(playlists)
 
     if queue_limit is None:
         queue_limit = prompt_for_queue_limit()
