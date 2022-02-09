@@ -189,42 +189,44 @@ def parse_args(argv: list) -> tuple:
 
     argv -- command line arguments as list. Same as sys.argv'''
 
-    username = None
-    playlist_name = None
-    queue_limit = None
-    no_double_artist_flag = False
-    no_double_album_flag = False
+    options = {
+        "username" : None,
+        "playlist_name" : None,
+        "queue_limit" : None,
+        "no_double_artist_flag" : False,
+        "no_double_album_flag" : False
+    }
 
     for idx, arg in enumerate(argv):
         try:
             if arg == '-u':
-                username = argv[idx+1]
+                options['username'] = argv[idx+1]
             elif arg == '-p':
-                playlist_name = argv[idx+1]
+                options['playlist_name'] = argv[idx+1]
             elif arg == '-l':
                 if argv[idx+1] == "inf":
-                    queue_limit = float("inf")
+                    options['queue_limit'] = float("inf")
                     continue
 
                 if not argv[idx+1].isnumeric():
                     sys.exit("Queue limit must be integer or 'inf' for infinite")
 
-                queue_limit = int(argv[idx+1])
+                options['queue_limit'] = int(argv[idx+1])
 
-                if queue_limit < 1:
+                if options['queue_limit'] < 1:
                     sys.exit("Queue limit must be greather than 0, or inf to mean infinite.")
 
             elif arg == '-ndar':
-                no_double_artist_flag = True
+                options["no_double_artist_flag"] = True
             elif arg == '-ndal':
-                no_double_album_flag = True
+                options["no_double_album_flag"] = True
             elif arg in ["-help", "-h"]:
                 sys.exit(help_string())
 
         except IndexError:
             sys.exit("Each -u, -p and -l must have an argument after it.")
 
-    return (username, playlist_name, queue_limit, no_double_artist_flag, no_double_album_flag)
+    return options
 
 def main(argv):
     '''Shuffle songs in playlist and add to user's play queue.
@@ -242,7 +244,8 @@ def main(argv):
     Will be prompted for this if not provided.
 
     -l -- argument following this is the maximum number of songs that should be queued.
-    Will be prompted for this if not provided
+    "inf" means no limit.
+    Will be prompted for this if not provided.
 
     -ndar -- flag that makes shuffler avoid playing the same artist twice in a row.
 
@@ -252,10 +255,9 @@ def main(argv):
 
     scope = 'user-library-read user-read-recently-played playlist-read-private streaming'
 
-    username, playlist_name, queue_limit, \
-         no_double_artist_flag, no_double_album_flag = parse_args(argv)
+    options = parse_args(argv)
 
-    if username is None:
+    if options['username'] is None:
         username = input("Enter Spotify Username: ")
 
     spotify_conn = get_auth(username, scope)
@@ -274,38 +276,39 @@ def main(argv):
     #     print(item['name'], item['id'], item['tracks']['total'])
 
     # Select Playlist
-    if playlist_name:
-        playlist = find_name_in_playlists(playlists, playlist_name)
+    if options["playlist_name"]:
+        playlist = find_name_in_playlists(playlists, options["playlist_name"])
         if not playlist:
             sys.exit("Failed to find playlist with that name. Must match exactly!")
     else:
         playlist = prompt_for_playlist(playlists)
 
-    if queue_limit is None:
-        queue_limit = prompt_for_queue_limit()
+    if options["queue_limit"] is None:
+        options["queue_limit"] = prompt_for_queue_limit()
 
     # Get Tracks of Selected Playlist
     print("Getting Tracks from Playlist...")
     playlist_tracks = get_tracks_from_playlist(spotify_conn, playlist)
     print("Done!")
 
-    # Get Shuffled List
-    shuffled_list = Shuffler.shuffle(playlist_tracks, recent_track_list,
-     no_double_artist=no_double_artist_flag, no_double_album=no_double_album_flag, debug=True)
+    # Get Shuffled Queue
+    shuffled_queue = Shuffler.shuffle(playlist_tracks, recent_track_list,
+     no_double_artist=options["no_double_artist_flag"],
+      no_double_album=options["no_double_album_flag"], debug=True)
 
     # Queue
     print("Queueing songs...")
 
     try:
-        for idx, song in enumerate(shuffled_list):
+        for idx, song in enumerate(shuffled_queue):
             spotify_conn.add_to_queue(song['track']['uri'])
-            if queue_limit is not None and idx > queue_limit:
+            if options["queue_limit"] is not None and idx > options["queue_limit"]:
                 break
             time.sleep(0.03)
     except spotipy.exceptions.SpotifyException:
         sys.exit("ERROR: Please make sure a device is actively playing.")
 
-    print("Done!")
+    print("Done! Exiting...")
 
 if __name__ == "__main__":
     main(sys.argv)
