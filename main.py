@@ -1,11 +1,11 @@
 import sys
 import time
 import spotipy
-import spotipy.util as util
+from spotipy import util
 from dotenv import load_dotenv
 from Shuffler import Shuffler
 
-def help():
+def help_string():
     """Returns help doc."""
     return '''Flags: \n\
     -u : Argument after this flag is taken as the username. Program will ask for username if not provided. Example: python main.py -u usernameHere
@@ -32,8 +32,8 @@ def get_auth(username, scope) -> spotipy.Spotify:
     if not token:
         return None
 
-    sp = spotipy.Spotify(auth=token)
-    return sp
+    spotify_conn = spotipy.Spotify(auth=token)
+    return spotify_conn
 
 def select_playlist(playlists, selected_playlist_name=None):
     """Get dictionary object for a playlist chosen by the user from a list of playlists.
@@ -67,7 +67,6 @@ def select_playlist(playlists, selected_playlist_name=None):
             select_flag = 2
         else:
             print("Invalid Input")
-    
 
     entry = None
     if select_flag == 1:
@@ -80,7 +79,7 @@ def select_playlist(playlists, selected_playlist_name=None):
             if idx > len(playlists) or idx < 1:
                 print("Invalid Index")
                 continue
-            
+
             return playlists[idx-1] # One-indexed
 
     if select_flag == 2:
@@ -92,23 +91,21 @@ def select_playlist(playlists, selected_playlist_name=None):
                     return item
 
             print("Did not find name!")
-            
-def get_playlists(sp):
+
+def get_playlists(spotify_conn):
     """Gets a user's playlists.
-    
+
     Assumes spotipy.spotify object passed in is already authenticated with a user.
-    
+
     Arguments:
-    
-    sp - spotipy.Spotify object authenticated with user"""
+
+    spotify_conn - spotipy.Spotify object authenticated with user"""
     playlists = []
     offset = 0
     offset_difference = 50
 
     while True:
-        results = sp.current_user_playlists(offset=offset) 
-        ''' dict_keys(['collaborative', 'description', 'external_urls', 'href', 'id', 'images',
-        'name', 'owner', 'primary_color', 'public', 'snapshot_id', 'tracks', 'type', 'uri'])'''
+        results = spotify_conn.current_user_playlists(offset=offset)
 
         if not results['items']:
             break
@@ -122,17 +119,17 @@ def get_playlists(sp):
 
     return playlists
 
-def get_tracks_from_playlist(sp, playlist):
+def get_tracks_from_playlist(spotify_conn, playlist):
     """Get tracks from a given playlist
-    
+
     Assumes spotipy.Spotify object passed in is already authenticated with a user
 
-    Returns list of track dictionary objects from Spotify API. Returns empty list if playlist is empty
-    or the playlist was not found.
-    
+    Returns list of track dictionary objects from Spotify API.
+    Returns empty list if playlist is empty or the playlist was not found.
+
     Arguments:
-    
-    sp -- spotipy.Spotify object authenticated with a user
+
+    spotify_conn -- spotipy.Spotify object authenticated with a user
 
     playlist -- dictionary object of data from Spotify API for a particular playlist"""
 
@@ -141,7 +138,7 @@ def get_tracks_from_playlist(sp, playlist):
     offset_difference = 100
 
     while True:
-        results = sp.user_playlist_tracks(playlist_id=playlist['id'], offset=offset)
+        results = spotify_conn.user_playlist_tracks(playlist_id=playlist['id'], offset=offset)
 
         if not results['items']:
             break
@@ -152,12 +149,12 @@ def get_tracks_from_playlist(sp, playlist):
             break
 
         offset += offset_difference
-    
+
     return playlist_tracks
 
 def get_queue_limit():
     '''Prompt user to enter queue limit.
-    
+
     Returns positive integer that is the queue limit
     or None if no limit is desired or correctly entered.'''
     queue_limit = None
@@ -173,11 +170,12 @@ def get_queue_limit():
 
 def parse_args(argv: list) -> tuple:
     '''Parse command line arguments and return variables and flags as necessary.
-    
-    Returns tuple of username, playlist_name, queue_limit, no_double_artist_flag, no_double_album_flag
+
+    Returns tuple of
+    username, playlist_name, queue_limit, no_double_artist_flag, no_double_album_flag
 
     Arguments:
-    
+
     argv -- command line arguments as list. Same as sys.argv'''
     username = None
     playlist_name = None
@@ -193,39 +191,42 @@ def parse_args(argv: list) -> tuple:
                 playlist_name = argv[idx+1]
             elif arg == '-l':
                 if not argv[idx+1].isnumeric():
-                    sys.exit(f"Queue limit must be integer")
+                    sys.exit("Queue limit must be integer")
 
                 queue_limit = int(argv[idx+1])
 
                 if queue_limit < 1:
-                    sys.exit(f"Queue limit must be greater than 0.")
+                    sys.exit("Queue limit must be greater than 0.")
             elif arg == '-ndar':
                 no_double_artist_flag = True
             elif arg == '-ndal':
                 no_double_album_flag = True
-            elif arg == "-help" or arg == "-h":
-                sys.exit(help())
-        
+            elif arg in ["-help", "-h"]:
+                sys.exit(help_string())
+
         except IndexError:
-            sys.exit(f"Each -u, -p and -l must have an argument after it.")
+            sys.exit("Each -u, -p and -l must have an argument after it.")
 
     return (username, playlist_name, queue_limit, no_double_artist_flag, no_double_album_flag)
 
 def main(argv):
     '''Shuffle songs in playlist and add to user's play queue.
-    
+
     Arguments:
-    
+
     argv -- same as sys.argv
-    
+
     Supports several flags through argv:
-    
-    -u -- argument following this is the user's username. Will be prompted for this if not provided.
-    
-    -p -- argument following this is the desired playlist to shuffle. Will be prompted for this if not provided.
-    
-    -l -- argument following this is the maximum number of songs that should be queued. Will be prompted for this if not provided
-    
+
+    -u -- argument following this is the user's username.
+    Will be prompted for this if not provided.
+
+    -p -- argument following this is the name of the playlist to shuffle.
+    Will be prompted for this if not provided.
+
+    -l -- argument following this is the maximum number of songs that should be queued.
+    Will be prompted for this if not provided
+
     -ndar -- flag that makes shuffler avoid playing the same artist twice in a row.
 
     -ndal -- flag that makes shuffler avoid playing the same album twice in a row.'''
@@ -237,24 +238,20 @@ def main(argv):
     username, playlist_name, queue_limit, \
          no_double_artist_flag, no_double_album_flag = parse_args(argv)
 
-    if username == None:
+    if username is None:
         username = input("Enter Spotify Username: ")
 
-    sp = get_auth(username, scope)
-    if not sp:
+    spotify_conn = get_auth(username, scope)
+    if not spotify_conn:
         print("Can't get token for ", username)
         sys.exit()
 
     # Get Recently Played
-    results = sp.current_user_recently_played(limit=50)
+    results = spotify_conn.current_user_recently_played(limit=50)
     recent_track_list = results['items']
 
-    # print(recent_track_list[0]['tracks'].keys()) 
-    ''' dict_keys(['album', 'artists', 'available_markets',
-    'disc_number', 'duration_ms', 'explicit', 'external_ids', 'external_urls', 'href', 'id', 'is_local', 'name', 'popularity', 'preview_url', 'track_number', 'type', 'uri'])'''
-
     # Get Playlists
-    playlists = get_playlists(sp)
+    playlists = get_playlists(spotify_conn)
 
     # for item in playlists:
     #     print(item['name'], item['id'], item['tracks']['total'])
@@ -267,7 +264,7 @@ def main(argv):
 
     # Get Tracks of Selected Playlist
     print("Getting Tracks from Playlist...")
-    playlist_tracks = get_tracks_from_playlist(sp, playlist)
+    playlist_tracks = get_tracks_from_playlist(spotify_conn, playlist)
     print("Done!")
 
     # for item in playlist_tracks:
@@ -281,7 +278,7 @@ def main(argv):
 
     try:
         for idx, song in enumerate(shuffled_list):
-            sp.add_to_queue(song['track']['uri'])
+            spotify_conn.add_to_queue(song['track']['uri'])
             if queue_limit is not None and queue_limit > 0 and idx > queue_limit:
                 break
             time.sleep(0.03)
