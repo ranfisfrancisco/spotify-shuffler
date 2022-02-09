@@ -9,8 +9,10 @@ def help_string():
     """Returns help doc."""
     return '''Flags: \n\
     -u : Argument after this flag is taken as the username. Program will ask for username if not provided. Example: python main.py -u usernameHere
-    -p : Argument after this flag is taken as the playlist to be queued. Program will as for playlist name if not provided. Example: python main.py -playlist rock
-    -l : Argument after this flag is taken as the max number of songs to be queued. Program will as for limit if not provided. Example: python main.py -l 20
+    -p : Argument after this flag is taken as the playlist to be queued. Program will ask for playlist name if not provided. Example: python main.py -playlist rock
+    -l : Argument after this flag is taken as the max number of songs to be queued. Program will ask for limit if not provided. "inf" signifies no limit. 
+    Example: python main.py -l 20
+    Example: python main.py -l inf
     -ndar: Signfies that the shuffler should avoid having the same artist play twice in a row (no double artist)
     -ndal: Signfies that the shuffler should avoid having the same artist play twice in a row (no double album)
         
@@ -190,13 +192,18 @@ def parse_args(argv: list) -> tuple:
             elif arg == '-p':
                 playlist_name = argv[idx+1]
             elif arg == '-l':
+                if argv[idx+1] == "inf":
+                    queue_limit = float("inf")
+                    continue
+
                 if not argv[idx+1].isnumeric():
-                    sys.exit("Queue limit must be integer")
+                    sys.exit("Queue limit must be integer or 'inf' for infinite")
 
                 queue_limit = int(argv[idx+1])
 
                 if queue_limit < 1:
-                    sys.exit("Queue limit must be greater than 0.")
+                    sys.exit("Queue limit must be greather than 0, or inf to mean infinite.")
+
             elif arg == '-ndar':
                 no_double_artist_flag = True
             elif arg == '-ndal':
@@ -271,7 +278,8 @@ def main(argv):
     #     print(item['track']['name'])
 
     # Get Shuffled List
-    shuffled_list = Shuffler.shuffle(playlist_tracks, recent_track_list, no_double_artist=no_double_artist_flag, no_double_album=no_double_album_flag, debug=True)
+    shuffled_list = Shuffler.shuffle(playlist_tracks, recent_track_list,
+     no_double_artist=no_double_artist_flag, no_double_album=no_double_album_flag, debug=True)
 
     # Queue
     print("Queueing songs...")
@@ -279,7 +287,7 @@ def main(argv):
     try:
         for idx, song in enumerate(shuffled_list):
             spotify_conn.add_to_queue(song['track']['uri'])
-            if queue_limit is not None and queue_limit > 0 and idx > queue_limit:
+            if queue_limit is not None and idx > queue_limit:
                 break
             time.sleep(0.03)
     except spotipy.exceptions.SpotifyException:
