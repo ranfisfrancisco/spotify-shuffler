@@ -326,7 +326,6 @@ def main(argv):
     try:
         for idx, song in enumerate(shuffled_queue):
             spotify_conn.add_to_queue(song['track']['uri'])
-            print(options["queue_limit"], idx)
             if options["queue_limit"] is not None and idx >= options["queue_limit"] - 1:
                 break
             time.sleep(0.03)
