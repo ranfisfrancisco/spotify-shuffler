@@ -17,6 +17,7 @@ def help_string():
     Example: python main.py -l inf
     -ndar: Signfies that the shuffler should avoid having the same artist play twice in a row (no double artist)
     -ndal: Signfies that the shuffler should avoid having the same artist play twice in a row (no double album)
+    -debug: prints shuffled queue to queue.log
 
 Troubleshooting:
     Make sure a device is actively connected to Spotify/playing or the queue attempt will fail.
@@ -219,7 +220,8 @@ def parse_args(argv: list) -> tuple:
         "playlist_name" : None,
         "queue_limit" : None,
         "no_double_artist_flag" : False,
-        "no_double_album_flag" : False
+        "no_double_album_flag" : False,
+        "debug" : False
     }
 
     argv = group_quotes(argv)
@@ -247,6 +249,8 @@ def parse_args(argv: list) -> tuple:
                 options["no_double_artist_flag"] = True
             elif arg == '-ndal':
                 options["no_double_album_flag"] = True
+            elif arg == "-debug":
+                options["debug"] = True
             elif arg in ["-help", "-h"]:
                 sys.exit(help_string())
 
@@ -318,7 +322,7 @@ def main(argv):
     # Get Shuffled Queue
     shuffled_queue = Shuffler.shuffle(playlist_tracks, recent_track_list,
      no_double_artist=options["no_double_artist_flag"],
-      no_double_album=options["no_double_album_flag"], debug=True)
+      no_double_album=options["no_double_album_flag"], debug=options["debug"])
 
     # Queue
     print("Queueing songs...")

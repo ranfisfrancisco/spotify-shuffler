@@ -53,7 +53,7 @@ class Shuffler:
                     if recency_index is None:
                         recency_index = "NA"
                     file.write(f'{recency_index} | {queue_track["song"]["track"]["name"]} |\
-                         {queue_track["song"]["track"]["artists"][0]["name"]} \n')
+ {queue_track["song"]["track"]["artists"][0]["name"]} \n')
 
         return [x['song'] for x in queue]
 
