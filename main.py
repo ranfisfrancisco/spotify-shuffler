@@ -1,6 +1,5 @@
 """Main module."""
 import sys
-import time
 import spotipy
 from spotipy import util
 from dotenv import load_dotenv
@@ -332,7 +331,6 @@ def main(argv):
             spotify_conn.add_to_queue(song['track']['uri'])
             if options["queue_limit"] is not None and idx >= options["queue_limit"] - 1:
                 break
-            time.sleep(0.03)
     except spotipy.exceptions.SpotifyException:
         sys.exit("ERROR: Please make sure a device is actively playing.")
 
