@@ -16,6 +16,7 @@ def help_string():
     Example: python main.py -l inf
     -ndar: Signfies that the shuffler should avoid having the same artist play twice in a row (no double artist)
     -ndal: Signfies that the shuffler should avoid having the same artist play twice in a row (no double album)
+    -ns: Disables shuffling the selected playlist(s)
     -debug: prints shuffled queue to queue.log
 
 Troubleshooting:
@@ -283,7 +284,9 @@ def main(argv):
 
     -ndar -- flag that makes shuffler avoid playing the same artist twice in a row.
 
-    -ndal -- flag that makes shuffler avoid playing the same album twice in a row.'''
+    -ndal -- flag that makes shuffler avoid playing the same album twice in a row.
+
+    -ns -- flag that, if true, will disable shuffling the selected playlist.'''
 
     load_dotenv()
 
