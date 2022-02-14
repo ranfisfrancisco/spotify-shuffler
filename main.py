@@ -237,7 +237,7 @@ def parse_args(argv: list) -> tuple:
                 options['playlist_name'] = argv[idx+1]
             elif arg in ['-l', 'limit']:
                 if argv[idx+1] == "inf":
-                    options['queue_limit'] = None
+                    options['queue_limit'] = float("inf")
                     continue
 
                 if not argv[idx+1].isnumeric():
@@ -347,7 +347,7 @@ def main(argv):
     try:
         for idx, song in enumerate(shuffled_queue):
             spotify_conn.add_to_queue(song['track']['uri'])
-            if options["queue_limit"] is not None and idx >= options["queue_limit"] - 1:
+            if options["queue_limit"] is not None and idx + 1 >= options["queue_limit"]:
                 break
     except spotipy.exceptions.SpotifyException:
         sys.exit("ERROR: Please make sure a device is actively playing.")
