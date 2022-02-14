@@ -8,15 +8,16 @@ from shuffler import Shuffler
 def help_string():
     """Returns help doc."""
     return '''Options: \n\
-    -u : Argument after this flag is taken as the username. Program will ask for username if not provided. Example: python main.py -u usernameHere
-    -p : Argument after this flag is taken as the playlist to be queued. Program will ask for playlist name if not provided. Example: python main.py -playlist "rock"
+    -u, -user : Argument after this flag is taken as the username. Program will ask for username if not provided. Example: python main.py -u usernameHere
+    -p, -playlist : Argument after this flag is taken as the playlist to be queued. Program will ask for playlist name if not provided. Example: python main.py -playlist "rock"
     If the playlist name is multiple words, it MUST be surrounded by double quotes ("").
-    -l : Argument after this flag is taken as the max number of songs to be queued. Program will ask for limit if not provided. "inf" signifies no limit.
+    -l, -limit : Argument after this flag is taken as the max number of songs to be queued. Program will ask for limit if not provided. "inf" signifies no limit.
     Example: python main.py -l 20
     Example: python main.py -l inf
     -ndar: Signfies that the shuffler should avoid having the same artist play twice in a row (no double artist)
     -ndal: Signfies that the shuffler should avoid having the same artist play twice in a row (no double album)
     -ns: Disables shuffling the selected playlist(s)
+    -o, -offset: Offsets start of queue.
     -debug: prints shuffled queue to queue.log
 
 Troubleshooting:
@@ -222,6 +223,7 @@ def parse_args(argv: list) -> tuple:
         "no_double_artist_flag" : False,
         "no_double_album_flag" : False,
         "no_shuffle" : False,
+        "offset": 0,
         "debug" : False
     }
 
@@ -244,7 +246,7 @@ def parse_args(argv: list) -> tuple:
                 options['queue_limit'] = int(argv[idx+1])
 
                 if options['queue_limit'] < 1:
-                    sys.exit("Queue limit must be greather than 0, or inf to mean infinite.")
+                    sys.exit("Queue limit must be greater than 0, or inf to mean infinite.")
 
             elif arg == '-ndar':
                 options["no_double_artist_flag"] = True
@@ -252,6 +254,15 @@ def parse_args(argv: list) -> tuple:
                 options["no_double_album_flag"] = True
             elif arg == '-ns':
                 options["no_shuffle"] = True
+            elif arg in ['-o', '-offset']:
+                if not argv[idx+1].isnumeric():
+                    sys.exit("Offset must be integer.")
+                
+                options["offset"] = int(argv[idx+1])
+
+                if options['offset'] < 1:
+                    sys.exit("Offset must be greater or equal to 0.")
+
             elif arg == "-debug":
                 options["debug"] = True
             elif arg in ["-help", "-h"]:
@@ -259,7 +270,7 @@ def parse_args(argv: list) -> tuple:
                 sys.exit()
 
         except IndexError:
-            sys.exit("Each -u, -p and -l must have an argument after it.")
+            sys.exit("Each -u, -p -l, and -o must have an argument after it.")
 
     return options
 
@@ -269,24 +280,18 @@ def main(argv):
     Arguments:
 
     argv -- same as sys.argv
-
     Supports several flags through argv:
-
-    -u -- argument following this is the user's username.
+    -u, -user -- argument following this is the user's username.
     Will be prompted for this if not provided.
-
-    -p -- argument following this is the name of the playlist to shuffle.
+    -p, -playlist -- argument following this is the name of the playlist to shuffle.
     Will be prompted for this if not provided.
-
-    -l -- argument following this is the maximum number of songs that should be queued.
+    -l, -list -- argument following this is the maximum number of songs that should be queued.
     "inf" means no limit.
     Will be prompted for this if not provided.
-
     -ndar -- flag that makes shuffler avoid playing the same artist twice in a row.
-
     -ndal -- flag that makes shuffler avoid playing the same album twice in a row.
-
-    -ns -- flag that, if true, will disable shuffling the selected playlist.'''
+    -ns -- flag that, if true, will disable shuffling the selected playlist.
+    -o,-offset -- Offsets start of queue'''
 
     load_dotenv()
 
@@ -326,12 +331,15 @@ def main(argv):
     print("Done!")
 
     # Get Shuffled Queue
-    if not options["no_shuffle"]:
+    if options["no_shuffle"]:
+        shuffled_queue = playlist_tracks
+    else:
         shuffled_queue = Shuffler.shuffle(playlist_tracks, recent_track_list,
         no_double_artist=options["no_double_artist_flag"],
         no_double_album=options["no_double_album_flag"], debug=options["debug"])
-    else:
-        shuffled_queue = playlist_tracks
+
+    # Offset
+    shuffled_queue = shuffled_queue[options["offset"]:]
 
     # Queue
     print("Queueing songs...")
