@@ -220,6 +220,7 @@ def parse_args(argv: list) -> tuple:
         "queue_limit" : None,
         "no_double_artist_flag" : False,
         "no_double_album_flag" : False,
+        "no_shuffle" : False,
         "debug" : False
     }
 
@@ -227,13 +228,13 @@ def parse_args(argv: list) -> tuple:
 
     for idx, arg in enumerate(argv):
         try:
-            if arg == '-u':
+            if arg in ['-u', '-user']:
                 options['username'] = argv[idx+1]
-            elif arg == '-p':
+            elif arg in ['-p', '-playlist']:
                 options['playlist_name'] = argv[idx+1]
-            elif arg == '-l':
+            elif arg in ['-l', 'limit']:
                 if argv[idx+1] == "inf":
-                    options['queue_limit'] = float("inf")
+                    options['queue_limit'] = None
                     continue
 
                 if not argv[idx+1].isnumeric():
@@ -248,10 +249,13 @@ def parse_args(argv: list) -> tuple:
                 options["no_double_artist_flag"] = True
             elif arg == '-ndal':
                 options["no_double_album_flag"] = True
+            elif arg == '-ns':
+                options["no_shuffle"] = True
             elif arg == "-debug":
                 options["debug"] = True
             elif arg in ["-help", "-h"]:
-                sys.exit(help_string())
+                print(help_string())
+                sys.exit()
 
         except IndexError:
             sys.exit("Each -u, -p and -l must have an argument after it.")
@@ -319,9 +323,12 @@ def main(argv):
     print("Done!")
 
     # Get Shuffled Queue
-    shuffled_queue = Shuffler.shuffle(playlist_tracks, recent_track_list,
-     no_double_artist=options["no_double_artist_flag"],
-      no_double_album=options["no_double_album_flag"], debug=options["debug"])
+    if not options["no_shuffle"]:
+        shuffled_queue = Shuffler.shuffle(playlist_tracks, recent_track_list,
+        no_double_artist=options["no_double_artist_flag"],
+        no_double_album=options["no_double_album_flag"], debug=options["debug"])
+    else:
+        shuffled_queue = playlist_tracks
 
     # Queue
     print("Queueing songs...")
