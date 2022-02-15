@@ -62,6 +62,11 @@ Example: python main.py -l inf
 
 **-ndal**: Signfies that the shuffler should avoid having the same artist play twice in a row (no double album)
 
+**-ns**: Disables shuffling the selected playlist(s)
+
+**-o, -offset:** Offsets start of queue by provided amount.
+Example: python main.py -p "Rock" -ns -o 25
+
 **-debug**: prints shuffled queue song names to queue.log
 
 ## Usage
@@ -73,6 +78,13 @@ For example, you may run this back to back and queue random songs from each of t
 python main.py -u alan_smith -l 5 -p "Rock"
 python main.py -u alan_smith -l 10 -p "Sick beats to chill/study to"
 python main.py -u alan_smith -l 3 -p "my secret Imagine Dragons playlist"
+```
+
+The no-shuffle and offset flags can be used to queue songs from a playlist unshuffled starting from a specific point.
+
+```
+# Queue 10 songs from playlist "Rock" starting track 15.
+python main.py -u alan_smith -l 10 -p "Rock" -o 15 -ns
 ```
 
 ## Troubleshooting
