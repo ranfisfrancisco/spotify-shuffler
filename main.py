@@ -257,7 +257,7 @@ def parse_args(argv: list) -> tuple:
             elif arg in ['-o', '-offset']:
                 if not argv[idx+1].isnumeric():
                     sys.exit("Offset must be integer.")
-                
+
                 options["offset"] = int(argv[idx+1])
 
                 if options['offset'] < 0:
