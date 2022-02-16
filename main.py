@@ -260,7 +260,7 @@ def parse_args(argv: list) -> tuple:
                 
                 options["offset"] = int(argv[idx+1])
 
-                if options['offset'] < 1:
+                if options['offset'] < 0:
                     sys.exit("Offset must be greater or equal to 0.")
 
             elif arg == "-debug":
@@ -304,8 +304,7 @@ def main(argv):
 
     spotify_conn = get_auth(options['username'], scope)
     if not spotify_conn:
-        print("Can't get token for ", options['username'])
-        sys.exit()
+        sys.exit(f"Can't get token for  {options['username']}")
 
     # Get Recently Played
     results = spotify_conn.current_user_recently_played(limit=50)
