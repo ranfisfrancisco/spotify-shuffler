@@ -343,6 +343,9 @@ def main(argv):
     for playlist in selected_playlists:
         playlist_tracks.extend(get_tracks_from_playlist(spotify_conn, playlist))
 
+    # Remove Duplicate Tracks based on URI
+    playlist_tracks = list({ track_data['track']['uri'] : track_data for track_data in playlist_tracks }.values())
+
     print("Done!")
 
     # Get Shuffled Queue
