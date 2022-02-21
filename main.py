@@ -317,10 +317,13 @@ def main(argv):
     if options["playlist_names"] and len(options["playlist_names"]) > 0:
         selected_playlists = []
 
-        for playlist in options["playlist_names"]:
-            selected_playlists.append(get_playlist_from_playlists(user_playlists, playlist))
-            if not selected_playlists:
-                sys.exit(f"Failed to find playlist with the name {playlist['name']}. Must match exactly!")
+        for playlist_name in options["playlist_names"]:
+            fetch_pl = get_playlist_from_playlists(user_playlists, playlist_name)
+            if not fetch_pl:
+                sys.exit(f"Failed to find playlist with the name {playlist_name}. Must match exactly!\nExiting...")
+
+            selected_playlists.append(fetch_pl)
+            
     else:
         selected_playlists = prompt_for_playlist(user_playlists)
 
