@@ -9,8 +9,10 @@ def help_string():
     """Returns help doc."""
     return '''Options: \n\
     -u, -user : Argument after this flag is taken as the username. Program will ask for username if not provided. Example: python main.py -u usernameHere
-    -p, -playlist : Argument after this flag is taken as the playlist to be queued. Program will ask for playlist name if not provided. Example: python main.py -playlist "rock"
+    -p, -playlist : Argument after this flag is taken as a playlist to be queued. Program will ask for playlist name if not provided. Example: python main.py -playlist "rock"
     If the playlist name is multiple words, it MUST be surrounded by double quotes ("").
+    Multiple playlists can be provided.
+    Example: python main.py -p "Rock" -p "Pop"
     -l, -limit : Argument after this flag is taken as the max number of songs to be queued. Program will ask for limit if not provided. "inf" signifies no limit.
     Example: python main.py -l 20
     Example: python main.py -l inf
@@ -209,8 +211,8 @@ def group_quotes(argv):
 def parse_args(argv: list) -> tuple:
     '''Parse command line arguments and return variables and flags as necessary.
 
-    Returns tuple of
-    username, playlist_name, queue_limit, no_double_artist_flag, no_double_album_flag
+    Returns dictionary of
+    username, playlist_names, queue_limit, no_double_artist_flag, no_double_album_flag
 
     Arguments:
 
@@ -285,6 +287,9 @@ def main(argv):
     Will be prompted for this if not provided.
     -p, -playlist -- argument following this is the name of the playlist to shuffle.
     Will be prompted for this if not provided.
+    If the playlist name is multiple words, it MUST be surrounded by double quotes ("").
+    Multiple playlists can be provided.
+    Example: python main.py -p "Rock" -p "Pop"
     -l, -list -- argument following this is the maximum number of songs that should be queued.
     "inf" means no limit.
     Will be prompted for this if not provided.
@@ -331,7 +336,7 @@ def main(argv):
         options["queue_limit"] = prompt_for_queue_limit()
 
 
-    # Get Tracks of Selected Playlist
+    # Get Tracks of Selected Playlists
     print("Getting Tracks from Playlist...")
 
     playlist_tracks = []

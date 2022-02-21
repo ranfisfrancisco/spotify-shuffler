@@ -53,6 +53,9 @@ Example: python main.py -u username_here
 Example: python main.py -p "Rock"
 If the playlist name is multiple words, it MUST be surrounded by double quotes ("").
 Example: python main.py -p "The best playlist of all time"
+Multiple playlists can be provided.
+Example: python main.py -p "Rock" -p "Pop"
+
 
 **-l** : Argument after this flag is taken as the max number of songs to be queued from the selected playlist. Program will ask for limit if not provided. "inf" signifies no limit.
 Example: python main.py -l 20
