@@ -44,7 +44,7 @@ def get_auth(username, scope) -> spotipy.Spotify:
     spotify_conn = spotipy.Spotify(auth=token)
     return spotify_conn
 
-def find_name_in_playlists(playlists, name):
+def get_playlist_from_playlists(playlists, name):
     """Return playlist matching given name.
     Returns None if not found.
 
@@ -99,7 +99,7 @@ def prompt_for_playlist(playlists):
         while True:
             entry = input('Enter name: ')
 
-            playlist = find_name_in_playlists(playlists, entry)
+            playlist = get_playlist_from_playlists(playlists, entry)
             if playlist:
                 return playlist
 
@@ -218,7 +218,7 @@ def parse_args(argv: list) -> tuple:
 
     options = {
         "username" : None,
-        "playlist_name" : None,
+        "playlist_names" : [],
         "queue_limit" : None,
         "no_double_artist_flag" : False,
         "no_double_album_flag" : False,
@@ -234,7 +234,7 @@ def parse_args(argv: list) -> tuple:
             if arg in ['-u', '-user']:
                 options['username'] = argv[idx+1]
             elif arg in ['-p', '-playlist']:
-                options['playlist_name'] = argv[idx+1]
+                options['playlist_names'].append(argv[idx+1])
             elif arg in ['-l', 'limit']:
                 if argv[idx+1] == "inf":
                     options['queue_limit'] = float("inf")
@@ -311,22 +311,30 @@ def main(argv):
     recent_track_list = results['items']
 
     # Get Playlists
-    playlists = get_playlists(spotify_conn)
+    user_playlists = get_playlists(spotify_conn)
 
     # Select Playlist
-    if options["playlist_name"]:
-        playlist = find_name_in_playlists(playlists, options["playlist_name"])
-        if not playlist:
-            sys.exit("Failed to find playlist with that name. Must match exactly!")
+    if options["playlist_names"] and len(options["playlist_names"]) > 0:
+        selected_playlists = []
+
+        for playlist in options["playlist_names"]:
+            selected_playlists.append(get_playlist_from_playlists(user_playlists, playlist))
+            if not selected_playlists:
+                sys.exit(f"Failed to find playlist with the name {playlist['name']}. Must match exactly!")
     else:
-        playlist = prompt_for_playlist(playlists)
+        selected_playlists = prompt_for_playlist(user_playlists)
 
     if options["queue_limit"] is None:
         options["queue_limit"] = prompt_for_queue_limit()
 
+
     # Get Tracks of Selected Playlist
     print("Getting Tracks from Playlist...")
-    playlist_tracks = get_tracks_from_playlist(spotify_conn, playlist)
+
+    playlist_tracks = []
+    for playlist in selected_playlists:
+        playlist_tracks.extend(get_tracks_from_playlist(spotify_conn, playlist))
+
     print("Done!")
 
     # Get Shuffled Queue
