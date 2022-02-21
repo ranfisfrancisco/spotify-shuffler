@@ -60,6 +60,7 @@ def get_playlist_from_playlists(playlists, name):
             return item
     return None
 
+# TODO: Needs refactoring to support adding multiple playlists
 def prompt_for_playlist(playlists):
     """Get dictionary object for a playlist chosen by the user from a list of playlists.
 
@@ -330,7 +331,7 @@ def main(argv):
             selected_playlists.append(fetch_pl)
             
     else:
-        selected_playlists = prompt_for_playlist(user_playlists)
+        selected_playlists = [prompt_for_playlist(user_playlists)]
 
     if options["queue_limit"] is None:
         options["queue_limit"] = prompt_for_queue_limit()
