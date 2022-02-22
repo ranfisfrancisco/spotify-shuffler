@@ -60,7 +60,6 @@ def get_playlist_from_playlists(playlists, name):
             return item
     return None
 
-# TODO: Needs refactoring to support adding multiple playlists
 def prompt_for_playlist(playlists):
     """Get dictionary object for a playlist chosen by the user from a list of playlists.
 
@@ -69,9 +68,6 @@ def prompt_for_playlist(playlists):
     Arguments:
 
     playlists -- list of playlists obtained through Spotify API
-
-    selected_playlist_name -- if the user has already entered the desired playlist name,
-    this will be used to find the playlist first (default None)
     """
 
     entry = None
@@ -89,24 +85,30 @@ def prompt_for_playlist(playlists):
             print("Invalid Input")
 
     entry = None
+    selected_playlists = []
     if select_flag == 1:
         while True:
-            entry = input('Enter index: ')
+            entry = input('Enter index or nothing to finish: ')
+            if entry == "" and len(selected_playlists) > 0:
+                return selected_playlists
             if not entry.isnumeric() or int(entry) > len(playlists) or int(entry) < 1:
                 print("Invalid Index")
                 continue
 
             idx = int(entry)
-            return playlists[idx-1] # One-indexed
+            selected_playlists.append(playlists[idx-1]) # One-indexed
+
     elif select_flag == 2:
         while True:
-            entry = input('Enter name: ')
+            entry = input('Enter name or nothing to finish: ')
+            if entry == "" and len(selected_playlists) > 0:
+                return selected_playlists
 
             playlist = get_playlist_from_playlists(playlists, entry)
             if playlist:
-                return playlist
-
-            print("Did not find name!")
+                selected_playlists.append(playlist)
+            else:
+                print("Did not find name!")
 
 def get_playlists(spotify_conn):
     """Gets a user's playlists.
@@ -331,7 +333,7 @@ def main(argv):
             selected_playlists.append(fetch_pl)
             
     else:
-        selected_playlists = [prompt_for_playlist(user_playlists)]
+        selected_playlists = prompt_for_playlist(user_playlists)
 
     if options["queue_limit"] is None:
         options["queue_limit"] = prompt_for_queue_limit()
