@@ -10,17 +10,13 @@ class Shuffler:
     @staticmethod
     def shuffle_multiple_playlists(playlists: List, recently_played: List, queue_limit=20,
      no_double_artist=False, no_double_album=False, debug=False) -> List:
-
-        if queue_limit is None:
-            queue_limit = float("inf")
      
         queue = []
-        bag_factor = 2
+        bag_factor = 2 # Put this many songs from each playlist into a bag and select them at random
 
         for i in range(len(playlists)):
             playlists[i] = Shuffler.shuffle_single_playlist(playlists[i], recently_played, no_double_artist=no_double_artist,
-                no_double_album=no_double_album, debug=debug)[:queue_limit]
-
+                no_double_album=no_double_album, debug=debug)
 
         while len(queue) < queue_limit and sum([len(x) for x in playlists]) > 0:
             rand_index = []
@@ -31,10 +27,11 @@ class Shuffler:
             random.shuffle(rand_index)
 
             for i in rand_index:
-                queue.append(playlists[i].pop(0))
+                if len(playlists[i]) > 0:
+                    queue.append(playlists[i].pop(0))
 
-        for track in queue:
-            print(track["track"]["name"])
+                if len(queue) >= queue_limit:
+                    break
 
         return queue
     
