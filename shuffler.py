@@ -10,6 +10,19 @@ class Shuffler:
     @staticmethod
     def shuffle_multiple_playlists(playlists: List, recently_played: List, queue_limit=20,
      no_double_artist=False, no_double_album=False, debug=False) -> List:
+        '''Shuffle songs from different playlists weighed against what was recently played
+         with several optional modifications.
+
+        recently_played -- list of tracks obtained from the Spotify API
+         that have been played recently
+
+        no_double_artist -- flag that suggests shuffler should avoid playing
+         the same artist back to back. (default: False)
+
+        no_double_album -- flag that suggests shuffler should avoid playing
+         the same album back to back. (default: False)
+
+        debug -- flag that writes the shuffled queue to queue.log file'''
      
         queue = []
         bag_factor = 2 # Put this many songs from each playlist into a bag and select them at random
@@ -32,6 +45,9 @@ class Shuffler:
 
                 if len(queue) >= queue_limit:
                     break
+
+        # Remove Duplicate Tracks based on URI
+        queue = list({ track_data['track']['uri'] : track_data for track_data in queue }.values())
 
         return queue
     
