@@ -13,9 +13,9 @@ def help_string():
     If the playlist name is multiple words, it MUST be surrounded by double quotes ("").
     Multiple playlists can be provided.
     Example: python main.py -p "Rock" -p "Pop"
-    -l, -limit : Argument after this flag is taken as the max number of songs to be queued. Program will ask for limit if not provided. "inf" signifies no limit.
+    -l, -limit : Argument after this flag is taken as the max number of songs to be queued. Program will ask for limit if not provided. Max is 50.
     Example: python main.py -l 20
-    Example: python main.py -l inf
+    Example: python main.py -l 50
     -ndar: Signfies that the shuffler should avoid having the same artist play twice in a row (no double artist)
     -ndal: Signfies that the shuffler should avoid having the same artist play twice in a row (no double album)
     -ns: Disables shuffling the selected playlist(s)
@@ -240,17 +240,15 @@ def parse_args(argv: list) -> tuple:
             elif arg in ['-p', '-playlist']:
                 options['playlist_names'].append(argv[idx+1])
             elif arg in ['-l', 'limit']:
-                if argv[idx+1] == "inf":
-                    options['queue_limit'] = float("inf")
-                    continue
-
                 if not argv[idx+1].isnumeric():
-                    sys.exit("Queue limit must be integer or 'inf' for infinite")
+                    sys.exit("Queue limit must be integer.")
 
                 options['queue_limit'] = int(argv[idx+1])
 
                 if options['queue_limit'] < 1:
-                    sys.exit("Queue limit must be greater than 0, or inf to mean infinite.")
+                    sys.exit("Queue limit must be greater than 0.")
+                elif options['queue_limit'] > 50:
+                    options['queue_limit'] = 50
 
             elif arg == '-ndar':
                 options["no_double_artist_flag"] = True
@@ -292,8 +290,7 @@ def main(argv):
     If the playlist name is multiple words, it MUST be surrounded by double quotes ("").
     Multiple playlists can be provided.
     Example: python main.py -p "Rock" -p "Pop"
-    -l, -list -- argument following this is the maximum number of songs that should be queued.
-    "inf" means no limit.
+    -l, -list -- argument following this is the maximum number of songs that should be queued. Max is 50.
     Will be prompted for this if not provided.
     -ndar -- flag that makes shuffler avoid playing the same artist twice in a row.
     -ndal -- flag that makes shuffler avoid playing the same album twice in a row.
