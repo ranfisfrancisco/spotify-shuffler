@@ -227,7 +227,6 @@ def parse_args(argv: list) -> tuple:
         "queue_limit" : None,
         "no_double_artist_flag" : False,
         "no_double_album_flag" : False,
-        "no_shuffle" : False,
         "offset": 0,
         "debug" : False
     }
@@ -298,7 +297,6 @@ def main(argv):
     Will be prompted for this if not provided.
     -ndar -- flag that makes shuffler avoid playing the same artist twice in a row.
     -ndal -- flag that makes shuffler avoid playing the same album twice in a row.
-    -ns -- flag that, if true, will disable shuffling the selected playlist.
     -o,-offset -- Offsets start of queue'''
 
     load_dotenv()
@@ -344,20 +342,19 @@ def main(argv):
 
     playlist_tracks = []
     for playlist in selected_playlists:
-        playlist_tracks.extend(get_tracks_from_playlist(spotify_conn, playlist))
+        tracks = get_tracks_from_playlist(spotify_conn, playlist)
 
-    # Remove Duplicate Tracks based on URI
-    playlist_tracks = list({ track_data['track']['uri'] : track_data for track_data in playlist_tracks }.values())
+        # Remove Duplicate Tracks based on URI
+        tracks = list({ track_data['track']['uri'] : track_data for track_data in tracks }.values())
+
+        playlist_tracks.append(tracks)
 
     print("Done!")
 
     # Get Shuffled Queue
-    if options["no_shuffle"]:
-        shuffled_queue = playlist_tracks
-    else:
-        shuffled_queue = Shuffler.shuffle(playlist_tracks, recent_track_list,
-        no_double_artist=options["no_double_artist_flag"],
-        no_double_album=options["no_double_album_flag"], debug=options["debug"])
+    shuffled_queue = Shuffler.shuffle_multiple_playlists(playlist_tracks, recent_track_list, queue_limit=options["queue_limit"],
+    no_double_artist=options["no_double_artist_flag"],
+    no_double_album=options["no_double_album_flag"], debug=options["debug"])
 
     # Offset
     shuffled_queue = shuffled_queue[options["offset"]:]
