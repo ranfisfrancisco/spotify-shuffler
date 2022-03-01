@@ -105,7 +105,6 @@ class Shuffler:
             prev_artist = queue[i-1]["song"]["track"]["artists"][0]["name"]
 
             if cur_artist == prev_artist:
-                print("EQUALS EVENT", cur_artist)
                 for j in range(i+1, len(queue)):
                     j_artist = queue[j]["song"]["track"]["artists"][0]["name"]
 
@@ -113,13 +112,6 @@ class Shuffler:
                         temp = queue[j]
                         queue[j] = queue[i]
                         queue[i] = temp
-
-        for i in range(1, len(queue)-1):
-            cur_artist=queue[i]["song"]["track"]["artists"][0]["name"]
-            prev_artist=queue[i-1]["song"]["track"]["artists"][0]["name"]
-
-            if cur_artist == prev_artist:
-                print("---EQUALS EVENT", cur_artist)
 
         return queue
 
@@ -134,7 +126,6 @@ class Shuffler:
             prev_album = queue[i-1]["song"]["track"]["album"]["name"]
 
             if cur_album == prev_album:
-                print("EQUALS EVENT", cur_album)
                 for j in range(i+1, len(queue)):
                     j_artist = queue[j]["song"]["track"]["album"]["name"]
 
@@ -142,13 +133,6 @@ class Shuffler:
                         temp = queue[j]
                         queue[j] = queue[i]
                         queue[i] = temp
-
-        for i in range(1, len(queue)-1):
-            cur_album=queue[i]["song"]["track"]["album"]["name"]
-            prev_album=queue[i-1]["song"]["track"]["album"]["name"]
-
-            if cur_album == prev_album:
-                print("---EQUALS EVENT", cur_album)
 
         return queue
 
@@ -203,7 +187,7 @@ class Shuffler:
                 file.write('\nRECENTLY PLAYED TRACKS\n')
                 for idx, track in enumerate(recently_played):
                    file.write(f'{idx+1} | {track["track"]["name"]}\n')
-                
+
                 file.write("\nSHUFFLED LIST\n")
                 file.write('Index | Recently Played | Song | Artist\n')
                 for idx, queue_track in enumerate(queue):
